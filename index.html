@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Anomaly Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Apply styles to the container */
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: rgb(16, 103, 138);
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        
+        }
+        
+        /* Style the heading */
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #89e31c;
+            
+        }
+        
+        /* Style form elements */
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #7ca262;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: #1d3c35;
+        }
+        
+        /* Advanced CSS effects */
+        input[type="text"],
+        input[type="number"],
+        select,
+        button {
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        button:focus {
+            transform: rotateY(10deg);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body bgcolor="pink">
+    <div class="container">
+        <h1>Transaction Anomaly Detection</h1>
+        <form id="prediction-form" >
+            <label for="cardholder-name">Cardholder Name:</label>
+            <input type="text" id="cardholder-name" name="Cardholder Name" placeholder="Enter cardholder name" required><br>
+            <div id="error-msg" style="color: rgba(94, 31, 31, 0.534);"></div>
+            <script>
+                document.getElementById('cardholder-name').addEventListener('input', function(event) {
+                    var input = event.target.value;
+                    var isValid = /^[a-zA-Z\s]+$/.test(input); // Regular expression to allow only alphabets and spaces
+
+                    if (!isValid) {
+                        document.getElementById('error-msg').textContent = "Invalid characters. Please enter a valid name.";
+                        document.getElementById('cardholder-name').setCustomValidity("Invalid characters. Please enter a valid name.");
+                    } else {
+                        document.getElementById('error-msg').textContent = "";
+                        document.getElementById('cardholder-name').setCustomValidity("");
+                    }
+                });
+            </script>
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+            <label for="card-number">Card Number:</label>
+            <input type="text" id="card-number" name="Card Number" placeholder="Enter card number" required><br>
+            <div id="error-msg" style="color: red;"></div>
+
+            <script>
+                document.getElementById('card-number').addEventListener('input', function(event) {
+                    var input = event.target.value;
+                    var isValid = /^\d+$/.test(input); // Regular expression to allow only numeric characters
+
+                    if (!isValid) {
+                        document.getElementById('error-msg').textContent = "Invalid characters. Please enter a valid card number.";
+                        document.getElementById('card-number').setCustomValidity("Invalid characters. Please enter a valid card number.");
+                    } else {
+                        document.getElementById('error-msg').textContent = "";
+                        document.getElementById('card-number').setCustomValidity("");
+                    }
+                });
+            </script>
+            <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+
+            <label for="card-type">Card Type:</label>
+            <select id="card-type" name="Card Type">
+                <option value="" disabled selected>Select card type</option>
+                <option value="JCB 15 digit">JCB 15 digit</option>
+                <option value="JCB 16 digit">JCB 16 digit</option>
+                <option value="American Express">American Express</option>
+                <option value="VISA 13 digit">VISA 13 digit</option>
+                <option value="Discover">Discover</option>
+                <option value="Maestro">Maestro</option>
+                <option value="Diners Club / Carte Blanche">Diners Club / Carte Blanche</option>
+                <option value="Mastercard">Mastercard</option>
+                <option value="VISA 19 digit">VISA 19 digit</option>
+                <option value="VISA 16 digit">VISA 16 digit</option>
+            </select><br>
+            <div id="error-msg" style="color: red;"></div>
+
+            <script>
+                document.getElementById('card-type').addEventListener('change', function(event) {
+                    var selectedOption = event.target.value;
+                    var validOptions = ["Diners Club / Carte Blanche", "VISA 19 digit", "VISA 16 digit"]; // Define valid options
+
+                    if (!validOptions.includes(selectedOption)) {
+                        document.getElementById('error-msg').textContent = "Invalid card type selected. Please select a valid card type.";
+                        document.getElementById('card-type').setCustomValidity("Invalid card type selected. Please select a valid card type.");
+                    } else {
+                        document.getElementById('error-msg').textContent = "";
+                        document.getElementById('card-type').setCustomValidity("");
+                    }
+                });
+            </script>
+
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+            <label for="card-expiry-date">Card Expiry Date:</label>
+            <input type="text" id="card-expiry-date" name="Card Expiry Date" placeholder="Enter card expiry date" required><br>
+            <div id="error-msg" style="color: red;"></div>
+
+            <script>
+                document.getElementById('card-expiry-date').addEventListener('blur', function(event) {
+                    var expiryDate = event.target.value.trim();
+                    var validMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; // Define valid months
+
+                    // Split the expiry date into month and year
+                    var parts = expiryDate.split('-');
+                    var month = parts[0];
+                    var year = parts[1];
+
+                    // Check if the month is valid
+                    if (!validMonths.includes(month)) {
+                        document.getElementById('error-msg').textContent = "Invalid month in the expiry date. Please enter a valid month.";
+                        document.getElementById('card-expiry-date').setCustomValidity("Invalid month in the expiry date. Please enter a valid month.");
+                        return;
+                    }
+
+                    // Check if the year is a valid 2-digit or 4-digit number
+                    if (!(/^\d{2}|\d{4}$/.test(year))) {
+                        document.getElementById('error-msg').textContent = "Invalid year in the expiry date. Please enter a valid year.";
+                        document.getElementById('card-expiry-date').setCustomValidity("Invalid year in the expiry date. Please enter a valid year.");
+                        return;
+                    }
+
+                    // Check if the year is not in the past
+                    var currentYear = new Date().getFullYear() % 100; // Get current year's last 2 digits
+                    if (parseInt(year) < currentYear) {
+                        document.getElementById('error-msg').textContent = "Invalid year in the expiry date. Please enter a valid year.";
+                        document.getElementById('card-expiry-date').setCustomValidity("Invalid year in the expiry date. Please enter a valid year.");
+                        return;
+                    }
+
+                    // If all validations pass, clear the error message
+                    document.getElementById('error-msg').textContent = "";
+                    document.getElementById('card-expiry-date').setCustomValidity("");
+                });
+            </script>
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+            <label for="transaction-amount">Transaction Amount:</label>
+            <input type="number" id="transaction-amount" name="Transaction Amount" placeholder="Enter transaction amount" required><br>
+            <div id="error-msg-amount" style="color: red;"></div>
+
+            <script>
+                document.getElementById('transaction-amount').addEventListener('blur', function(event) {
+                    var amount = event.target.value.trim();
+
+                    // Check if the amount is a valid number
+                    if (isNaN(amount)) {
+                        document.getElementById('error-msg-amount').textContent = "Invalid transaction amount. Please enter a valid number.";
+                        document.getElementById('transaction-amount').setCustomValidity("Invalid transaction amount. Please enter a valid number.");
+                        return;
+                    }
+
+                    // Check if the amount is greater than 0
+                    if (parseFloat(amount) <= 0) {
+                        document.getElementById('error-msg-amount').textContent = "Transaction amount must be greater than 0.";
+                        document.getElementById('transaction-amount').setCustomValidity("Transaction amount must be greater than 0.");
+                        return;
+                    }
+
+                    // If all validations pass, clear the error message
+                    document.getElementById('error-msg-amount').textContent = "";
+                    document.getElementById('transaction-amount').setCustomValidity("");
+                });
+            </script>
+            <!-- ////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+
+            <label for="currency">Currency:</label>
+<select id="currency" name="Currency" required>
+    <option value="" disabled selected>Select currency</option>
+    <option value="LAK">LAK</option>
+    <option value="DJF">DJF</option>
+    <option value="TMT">TMT</option>
+    <option value="TND">TND</option>
+    <option value="ZMW">ZMW</option>
+    <option value="SYP">SYP</option>
+    <option value="DOP">DOP</option>
+    <option value="UGX">UGX</option>
+    <option value="HTG">HTG</option>
+    <option value="KYD">KYD</option>
+    <option value="HRK">HRK</option>
+    <option value="NGN">NGN</option>
+    <option value="IRR">IRR</option>
+    <option value="BHD">BHD</option>
+    <option value="RWF">RWF</option>
+    <option value="SVC">SVC</option>
+    <option value="NOK">NOK</option>
+    <option value="BDT">BDT</option>
+    <option value="BRL">BRL</option>
+    <option value="AMD">AMD</option>
+    <option value="CRC">CRC</option>
+    <option value="RWF">RWF</option>
+    <option value="NAD">NAD</option>
+</select>
+<div id="error-msg-currency" style="color: red;"></div>
+
+            <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+            
+
+            <label for="transaction-date-time">Transaction Date and Time (Format: MM/DD/YYYY HH:MM):</label>
+            <input type="text" id="transaction-date-time" name="Transaction Date and Time" placeholder="Enter transaction date and time (MM/DD/YYYY HH:MM)" pattern="\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}" title="Please enter the date and time in the format MM/DD/YYYY HH:MM" required><br>
+            <small>(Example: 03/09/2024 12:30)</small><br><br>
+
+
+            <label for="merchant-name">Merchant Name:</label>
+            <input type="text" id="merchant-name" name="Merchant Name" placeholder="Enter merchant name" required><br>
+            <small>(Example: Hall and Sons, Joyce-Cisneros, Little, Santos and Sparks, etc.)</small><br><br>
+
+
+            <label for="merchant-id">Merchant ID:</label>
+            <input type="text" id="merchant-id" name="Merchant ID" placeholder="Enter merchant ID" required><br>
+            <small>(Example: 8e4d554f-0081-463e-a38e-7b7dca25a03e, 12d8bc71-b724-43ff-9d15-30a24465e7f2, etc.)</small><br>
+            <small id="merchant-id-error" style="color: red;"></small><br><br>
+
+            <script>
+                document.getElementById('merchant-id').addEventListener('input', function() {
+                    var merchantIdInput = this.value.trim();
+                    var merchantIdPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+                    var errorText = '';
+
+                    if (!merchantIdPattern.test(merchantIdInput)) {
+                        errorText = 'Please enter a valid UUID format (e.g., 8e4d554f-0081-463e-a38e-7b7dca25a03e)';
+                    }
+
+                    document.getElementById('merchant-id-error').textContent = errorText;
+                });
+            </script>
+
+
+            <label for="authorization-code">Authorization Code:</label>
+            <input type="text" id="authorization-code" placeholder="e.g., 57a6df6d-ba68-418e-b225-d3abfb3442b0" required><br><br>
+
+
+            <label for="authorization-response">Authorization Response:</label>
+            <select id="authorization-response" name="Authorization Response" required>
+                <option value="" disabled selected hidden>Select authorization response</option>
+                <option value="Declined">Declined</option>
+                <option value="Approved">Approved</option>
+            </select><br><br>
+
+
+            <label for="terminal-id">Terminal ID:</label>
+            <input type="text" id="terminal-id" name="Terminal ID" placeholder="Enter terminal ID (e.g., 123e4567-e89b-12d3-a456-426614174000)" pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" title="Please enter a valid UUID format (e.g., 705a7c28-1fbb-4fd8-b30b-613e7d0f08d8)" required><br><br>
+
+
+
+            <label for="pos-entry-mode">POS Entry Mode:</label>
+            <select id="pos-entry-mode" name="POS Entry Mode" required>
+                <option value="Chip">Chip</option>
+                <option value="Swipe">Swipe</option>
+            </select><br><br>
+
+
+            <label for="transaction-type">Transaction Type:</label>
+            <select id="transaction-type" name="Transaction Type" required>
+                <option value="Purchase">Purchase</option>
+                <option value="Refund">Refund</option>
+            </select><br><br>
+
+
+            <label for="cvv">CVV/CVC:</label>
+            <input type="text" id="cvv" name="CVV/CVC" placeholder="Enter CVV/CVC" pattern="\d{3,4}" title="Please enter a 3 or 4-digit CVV/CVC code" required><br><br>
+
+
+            <label for="avs-data">AVS Data:</label>
+            <select id="avs-data" name="AVS Data" required>
+            <option value="" disabled selected>Select AVS data</option>
+            <option value="Not Matched">Not Matched</option>
+            <option value="Matched">Matched</option>
+            </select><br><br>
+
+
+            <label for="customer-signature">Customer Signature:</label>
+            <select id="customer-signature" name="Customer Signature" required>
+            <option value="" disabled selected>Select customer signature</option>
+            <option value="Not Required">Not Required</option>
+            <option value="Required">Required</option>
+            </select><br><br>
+
+            <label for="transaction-status">Transaction Status:</label>
+            <select id="transaction-status" name="Transaction Status" required>
+            <option value="" disabled selected>Select transaction status</option>
+            <option value="Settled">Settled</option>
+            <option value="Pending Settlement">Pending Settlement</option>
+            </select><br><br>
+
+        </form>
+        <button id="predict-button">Predict</button>
+        <div id="prediction-result"></div>
+    </div>
+    <script>
+        document.getElementById('predict-button').addEventListener('click', function() {
+            var formData = new FormData(document.getElementById('prediction-form'));
+        
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display prediction result
+                document.getElementById('prediction-result').textContent = data.prediction;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+        
+    </script>
+    
+</body>
+</html>
