@@ -18,7 +18,7 @@ def predict():
     try:
         # Receive form data
         request_data = request.form.to_dict()
-        # df = pd.DataFrame([data])
+        
         # Make prediction using your ML model
         prediction = on_predict_button_clicked(request_data)
         # Return prediction result as JSON
